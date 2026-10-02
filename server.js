@@ -154,7 +154,9 @@ function buildQuestions(themeId) {
   else if (themeId.startsWith('cat:')) ids = CATEGORIES.find(c => c.id === themeId.slice(4)).themes;
   else ids = [themeId];
   const pool = ids.flatMap(id => THEMES[id].questions.map(q => ({ ...q, tag: THEMES[id].name })));
-  return shuffle([...pool]).slice(0, TRACK).map(q => {
+  // On garde TOUTE la banque (pas seulement TRACK) : tant que le temps n'est pas
+  // écoulé, on peut continuer à poser des questions en recyclant la file.
+  return shuffle([...pool]).map(q => {
     const order = shuffle([0, 1, 2, 3]); // l'option 0 de la banque est la bonne réponse
     return { text: q.q, code: q.code, tag: q.tag, options: order.map(i => q.options[i]), answer: order.indexOf(0) };
   });
@@ -435,7 +437,9 @@ function resolveAnswer(room, p, seq, choice) {
   Object.assign(result, { pos: p.pos, lives: p.lives, score: p.score, streak: p.streak });
   if (p.socketId) io.to(p.socketId).emit('result', result);
 
-  if (isRacing(p) && p.queue.length === 0) finishQuiz(room, p); // plus de questions : quiz terminé
+  // Plus de questions en file : on recycle toute la banque (réordonnée) pour que
+  // le joueur continue tant que la course n'est pas finie (temps / ligne d'arrivée).
+  if (isRacing(p) && p.queue.length === 0) p.queue = shuffle(room.questions.map((_, i) => i));
   if (checkEnd(room)) return;
   broadcast(room);
   if (isRacing(p)) {
