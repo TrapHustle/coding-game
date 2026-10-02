@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Code Royale</title>
+  <meta name="description" content="Quiz QCM d'informatique multijoueur en temps réel : mode Course ou mode Combat.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-screen="home">
+  <header class="topbar">
+    <div class="logo">⚔️ CODE<span>ROYALE</span></div>
+    <div class="topbar-actions">
+      <div id="voice" class="voice" hidden>
+        <span id="voice-count" class="voice-count" title="Joueurs dans le vocal">🎧 0</span>
+        <button id="voice-mic" class="icon-btn" type="button" title="Couper / activer le micro" hidden>🎙️</button>
+        <button id="voice-join" class="icon-btn" type="button" title="Rejoindre le chat vocal">🎧</button>
+      </div>
+      <span id="conn" class="conn" title="Connexion au serveur"></span>
+      <button id="btn-mute" class="icon-btn" type="button" title="Activer / couper le son">🔊</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ ACCUEIL ============ -->
+    <section id="screen-home" class="screen active">
+      <div class="hero">
+        <h1>Le QCM d'informatique en <em>battle royale</em></h1>
+        <p>Choisis une catégorie et un sujet (JavaScript, Python, IA, Cybersécurité, Docker, AWS…), invite tes amis, puis affronte-les.
+          En <b>Course</b>, chaque bonne réponse te fait avancer sur la piste. En <b>Combat</b>, chaque bonne réponse envoie une bombe sur les autres.</p>
+      </div>
+
+      <div class="home-grid">
+        <div class="card">
+          <h2><span class="step">1</span> Ton profil</h2>
+          <label class="field">
+            <span class="label">Pseudo</span>
+            <input id="in-name" maxlength="16" placeholder="ex : NullPointer" autocomplete="off">
+          </label>
+          <div class="label">Avatar</div>
+          <div id="avatar-grid" class="avatar-grid"></div>
+          <div class="label">Couleur</div>
+          <div id="color-row" class="color-row"></div>
+          <div class="profile-preview">
+            <div id="pv-token" class="pv-token"></div>
+            <div>
+              <div id="pv-name" class="pv-name"></div>
+              <div class="muted small">C'est toi dans l'arène</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="tabs" role="tablist">
+            <button type="button" class="tab active" data-tab="create">Créer une partie</button>
+            <button type="button" class="tab" data-tab="join">Rejoindre</button>
+          </div>
+
+          <div id="tab-create" class="tab-panel active">
+            <div class="label">Mode de jeu</div>
+            <div id="seg-mode" class="seg seg-mode"></div>
+            <p id="mode-tagline" class="muted small mode-tagline"></p>
+
+            <div class="label">Sujet du QCM</div>
+            <div id="theme-grid" class="theme-grid"></div>
+
+            <div class="row2">
+              <div>
+                <div class="label">Temps par question</div>
+                <div id="seg-time" class="seg"></div>
+              </div>
+              <div id="lives-field">
+                <div class="label">Vies (Course)</div>
+                <div id="seg-lives" class="seg"></div>
+              </div>
+            </div>
+            <button id="btn-create" type="button" class="btn primary big">Créer le salon ⚔️</button>
+          </div>
+
+          <div id="tab-join" class="tab-panel">
+            <label class="field">
+              <span class="label">Code du salon</span>
+              <input id="in-code" class="code-input" maxlength="5" placeholder="ABCDE" autocomplete="off">
+            </label>
+            <button id="btn-join" type="button" class="btn primary big">Rejoindre la bataille</button>
+            <button id="btn-watch" type="button" class="btn ghost">👀 Regarder en spectateur</button>
+          </div>
+
+          <p id="home-error" class="error" role="alert"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SALON ============ -->
+    <section id="screen-lobby" class="screen">
+      <div class="card lobby-head">
+        <div>
+          <div class="label">Code du salon</div>
+          <div id="lobby-code" class="big-code">-----</div>
+        </div>
+        <div class="share">
+          <div class="label">Lien d'invitation</div>
+          <div class="share-row">
+            <input id="share-link" readonly>
+            <button id="btn-copy" type="button" class="btn">Copier</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="lobby-grid">
+        <div class="card">
+          <h2>Joueurs <span id="player-count" class="muted"></span></h2>
+          <div id="lobby-players" class="lobby-players"></div>
+          <p id="lobby-hint" class="muted small"></p>
+        </div>
+
+        <div class="card">
+          <h2>Réglages de la partie</h2>
+          <div class="settings">
+            <label class="field"><span class="label">Mode</span><select id="set-mode"></select></label>
+            <label class="field"><span class="label">Sujet</span><select id="set-theme"></select></label>
+            <div class="row2">
+              <label class="field"><span class="label">Temps / question</span><select id="set-time"></select></label>
+              <label class="field" id="set-lives-field"><span class="label">Vies</span><select id="set-lives"></select></label>
+            </div>
+          </div>
+          <ul class="rules" id="rules-course">
+            <li><b>🏁 Course — 20 questions = 20 cases.</b> Chaque bonne réponse te fait avancer d'une case.</li>
+            <li><b>Plus tu réponds vite, plus tu marques</b> (et tu doubles les autres).</li>
+            <li><b>Mauvaise réponse ou temps écoulé :</b> −1 vie, tu restes sur place et la question revient.</li>
+            <li><b>Checkpoints 🚩 aux cases 5, 10, 15 :</b> +1 vie et bonus pour les 3 premiers.</li>
+            <li><b>0 vie = éliminé 💀.</b> Le 1er à l'arrivée déclenche le sprint final de 45 s.</li>
+          </ul>
+          <ul class="rules" id="rules-combat" hidden>
+            <li><b>🥊 Combat — tout le monde a la même question en même temps.</b> 100 PV au départ.</li>
+            <li><b>Bonne réponse = tu lances une bombe 💣</b> sur tous ceux qui se trompent. Plus tu réponds vite, plus elle fait mal.</li>
+            <li><b>Bonne réponse = tu es immunisé 🛡️</b> : tu n'encaisses rien cette manche.</li>
+            <li><b>Mauvaise réponse / temps écoulé :</b> tu prends les bombes des autres.</li>
+            <li><b>0 PV = K.O. 💥.</b> Le dernier debout (ou le plus de PV après 20 manches) gagne.</li>
+          </ul>
+          <button id="btn-start" type="button" class="btn primary big">Lancer la bataille 🚀</button>
+          <p id="wait-host" class="waiting">⏳ En attente du lancement par l'hôte…</p>
+          <button id="btn-leave-lobby" type="button" class="btn ghost">Quitter le salon</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PARTIE ============ -->
+    <section id="screen-game" class="screen" data-gmode="course">
+      <div class="game">
+        <div class="card hud">
+          <div class="hud-theme" id="hud-theme"></div>
+          <div class="hud-round" id="hud-round" hidden></div>
+          <div class="hud-timer-wrap">
+            <span id="hud-sprint" class="sprint-tag" hidden>SPRINT</span>
+            <span id="hud-timer" class="hud-timer">--:--</span>
+          </div>
+          <div class="hud-me" id="hud-me">
+            <span class="hud-stat"><small>Rang</small><b id="hud-rank">-</b></span>
+            <span class="hud-stat"><small id="hud-l2">Case</small><b id="hud-s2">0</b></span>
+            <span class="hud-stat"><small id="hud-l3">Vies</small><b id="hud-s3"></b></span>
+            <span class="hud-stat"><small>Points</small><b id="hud-score">0</b></span>
+          </div>
+          <div class="hud-spec" id="hud-spec" hidden>👀 Spectateur</div>
+          <button id="btn-leave-game" type="button" class="icon-btn" title="Quitter la partie">🚪</button>
+        </div>
+
+        <div class="col col-left">
+          <div class="card question-card" id="question-card" data-mode="waiting">
+            <div id="minirace" class="minirace" aria-hidden="true">
+              <div class="mr-line"></div>
+            </div>
+
+            <div class="q-live">
+              <div class="q-top">
+                <span id="q-number" class="q-number"></span>
+                <span id="q-tag" class="chip"></span>
+                <span id="q-retry" class="chip retry" hidden>↻ Question revue</span>
+                <span id="q-secs" class="q-secs">0</span>
+              </div>
+              <div class="timebar"><div id="q-bar"></div></div>
+              <h3 id="q-text" class="q-text"></h3>
+              <pre id="q-code" class="q-code" hidden><code></code></pre>
+              <div id="q-options" class="options"></div>
+              <div id="q-feedback" class="feedback"></div>
+              <p class="muted small kbd-hint">Astuce : touches <kbd>1</kbd>–<kbd>4</kbd> ou <kbd>A</kbd>–<kbd>D</kbd></p>
+            </div>
+
+            <div class="q-wait">
+              <div class="big-emoji">⏳</div>
+              <h3>Prépare-toi…</h3>
+              <p class="muted">La première question arrive.</p>
+            </div>
+
+            <div class="q-done">
+              <div class="big-emoji" id="done-emoji"></div>
+              <h3 id="done-title"></h3>
+              <p id="done-text" class="muted"></p>
+            </div>
+          </div>
+
+          <div class="card feed-card">
+            <h2>Fil de la bataille</h2>
+            <div id="emotes" class="emotes"></div>
+            <ul id="feed" class="feed"></ul>
+          </div>
+        </div>
+
+        <div class="col col-right">
+          <div class="card track-card">
+            <div id="track" class="track">
+              <svg id="track-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
+              <div id="tokens" class="tokens"></div>
+            </div>
+          </div>
+          <div class="card arena-card">
+            <div class="arena" id="arena">
+              <div class="ring" id="ring"></div>
+              <div class="arena-fx" id="arena-fx"></div>
+            </div>
+          </div>
+          <div class="card board-card">
+            <h2>Classement en direct</h2>
+            <ol id="leaderboard" class="leaderboard"></ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RÉSULTATS ============ -->
+    <section id="screen-results" class="screen">
+      <div class="results">
+        <h1 id="res-title" class="res-title"></h1>
+        <p id="res-sub" class="muted res-sub"></p>
+        <div id="podium" class="podium"></div>
+        <div class="card table-card">
+          <table class="res-table">
+            <thead><tr id="res-head"></tr></thead>
+            <tbody id="res-body"></tbody>
+          </table>
+        </div>
+        <div class="res-actions">
+          <button id="btn-rematch" type="button" class="btn primary big">Nouvelle partie 🔁</button>
+          <span id="res-wait" class="muted">L'hôte peut relancer une partie dans le même salon…</span>
+          <button id="btn-quit" type="button" class="btn ghost">Quitter</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="countdown" class="overlay" hidden><div id="count-num" class="count-num"></div></div>
+  <div id="splash" class="splash" hidden><div id="splash-title" class="splash-title"></div><div id="splash-sub" class="splash-sub"></div></div>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

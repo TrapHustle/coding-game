@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: code-royale
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
