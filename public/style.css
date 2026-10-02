@@ -506,6 +506,18 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px r
 .lp.in-voice .lp-name::after,
 .lb-row.in-voice .lb-name::after,
 .fighter.in-voice .f-name::after { content: ' 🎙'; font-size: .85em; opacity: .75; }
-.lp.speaking, .lb-row.speaking, .fighter.speaking { box-shadow: 0 0 0 2px var(--accent), 0 0 16px rgba(57, 245, 168, .55) !important; }
-.token.speaking .tk-av { box-shadow: 0 0 0 3px var(--accent), 0 0 18px var(--accent) !important; }
+/* Halo vivant qui pulse autour de l'avatar quand la personne parle */
+@keyframes voice-pulse {
+  0%   { box-shadow: 0 0 0 0 var(--accent), 0 0 10px 2px rgba(57, 245, 168, .45); }
+  50%  { box-shadow: 0 0 0 4px var(--accent), 0 0 26px 8px rgba(57, 245, 168, .85); }
+  100% { box-shadow: 0 0 0 0 var(--accent), 0 0 10px 2px rgba(57, 245, 168, .45); }
+}
+.lp.speaking .lp-av,
+.token.speaking .tk-av,
+.fighter.speaking .f-avatar,
+.lb-row.speaking .lb-av,
+#res-body tr.speaking .mini-av {
+  animation: voice-pulse 1s ease-in-out infinite;
+  border-color: var(--accent) !important;
+}
 @media (max-width: 420px) { .voice-count { display: none; } }

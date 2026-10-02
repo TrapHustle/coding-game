@@ -262,6 +262,7 @@
     applyState(res.state);
     Voice.updateUI();
     if (Voice.joined && S.me) Voice.resync();
+    else if (!spectator && S.me) Voice.join(true); // vocal dès l'entrée dans la salle
   }
 
   function resetLocal() {
@@ -678,13 +679,13 @@
     ac: null, loop: null,
     cfg: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] },
 
-    async join() {
+    async join(auto = false) {
       if (this.joined || this._connecting) return;
       if (!window.isSecureContext) {
-        toast('🎙️ Le vocal exige une connexion HTTPS. Utilise le lien https (le tunnel), pas l\'adresse http://192.168…', 'bad');
+        if (!auto) toast('🎙️ Le vocal exige une connexion HTTPS. Utilise le lien https (le tunnel), pas l\'adresse http://192.168…', 'bad');
         return;
       }
-      if (!navigator.mediaDevices?.getUserMedia) { toast('Micro non supporté par ce navigateur.', 'bad'); return; }
+      if (!navigator.mediaDevices?.getUserMedia) { if (!auto) toast('Micro non supporté par ce navigateur.', 'bad'); return; }
       this._connecting = true;
       $('#voice').classList.add('connecting');
       try {
@@ -692,7 +693,7 @@
       } catch {
         this._connecting = false;
         $('#voice').classList.remove('connecting');
-        toast('Micro refusé ou indisponible. Autorise le micro dans le navigateur.', 'bad');
+        if (!auto) toast('Micro refusé ou indisponible. Autorise le micro dans le navigateur.', 'bad');
         return;
       }
       this.joined = true;
@@ -831,7 +832,7 @@
 
     applyIndicators() {
       const voiceIds = new Set((S.room?.players || []).filter(p => p.voice).map(p => p.id));
-      $$('#lobby-players .lp, #leaderboard .lb-row, #ring .fighter, #tokens .token').forEach(elm => {
+      $$('#lobby-players .lp, #leaderboard .lb-row, #ring .fighter, #tokens .token, #res-body tr').forEach(elm => {
         const id = elm.dataset.id;
         elm.classList.toggle('in-voice', voiceIds.has(id));
         elm.classList.toggle('speaking', this.speaking.has(id));
@@ -1200,7 +1201,7 @@
       const cells = combat
         ? [String(p.rank), null, resultText(p), p.ko ? '0' : String(p.hp), String(p.kos), String(p.correct), String(p.wrong), fmtNum(p.score)]
         : [String(p.rank), null, resultText(p), `${p.pos}/${st.track}`, String(p.correct), String(p.wrong), `x${p.bestStreak}`, fmtNum(p.score)];
-      return el('tr', { class: p.id === S.me ? 'me' : '' },
+      return el('tr', { class: p.id === S.me ? 'me' : '', 'data-id': p.id },
         ...cells.map((c, idx) => idx === 1
           ? el('td', {}, el('div', { class: 'res-player', style: `--c:${p.color}` }, el('span', { class: 'mini-av' }, p.avatar), p.name))
           : el('td', { class: idx === 0 || idx > 2 ? 'num' : '' }, c)));
@@ -1209,6 +1210,7 @@
     const isHost = !!S.me && st.hostId === S.me;
     $('#btn-rematch').hidden = !isHost;
     $('#res-wait').hidden = isHost;
+    Voice.applyIndicators();
   }
 
   // ================= Événements serveur =================
