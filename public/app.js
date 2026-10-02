@@ -677,7 +677,11 @@
     joined: false, muted: false, local: null,
     pcs: new Map(), audios: new Map(), meters: new Map(), speaking: new Set(),
     ac: null, loop: null,
+    // Config ICE de secours si le serveur n'en fournit pas (STUN seul).
     cfg: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] },
+    // Config réelle : STUN + TURN envoyés par le serveur (indispensable pour parler
+    // entre réseaux différents, 4G ou NAT symétrique).
+    rtcConfig() { return { iceServers: S.config?.iceServers || this.cfg.iceServers }; },
 
     async join(auto = false) {
       if (this.joined || this._connecting) return;
@@ -724,7 +728,7 @@
 
     connect(id, initiator) {
       if (this.pcs.has(id)) return this.pcs.get(id);
-      const pc = new RTCPeerConnection(this.cfg);
+      const pc = new RTCPeerConnection(this.rtcConfig());
       this.pcs.set(id, pc);
       for (const tr of this.local.getTracks()) pc.addTrack(tr, this.local);
       pc.onicecandidate = e => { if (e.candidate) socket.emit('voice:signal', { to: id, data: { candidate: e.candidate } }); };

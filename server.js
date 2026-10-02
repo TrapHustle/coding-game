@@ -79,6 +79,37 @@ const validTheme = id =>
   (typeof id === 'string' && id.startsWith('cat:') && CATEGORIES.some(c => c.id === id.slice(4)));
 
 // ---------- HTTP ----------
+// Serveurs ICE pour le chat vocal WebRTC.
+// STUN seul ne suffit pas entre réseaux différents (4G, NAT symétrique) : il faut
+// un relais TURN. On met par défaut le TURN public gratuit « Open Relay » (metered),
+// surchargeable par variables d'env (TURN_URL / TURN_USERNAME / TURN_CREDENTIAL)
+// pour brancher ton propre TURN (Twilio, metered payant, coturn…) si besoin.
+function iceServers() {
+  const servers = [
+    { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+  ];
+  if (process.env.TURN_URL) {
+    servers.push({
+      urls: process.env.TURN_URL.split(',').map(s => s.trim()).filter(Boolean),
+      username: process.env.TURN_USERNAME || '',
+      credential: process.env.TURN_CREDENTIAL || '',
+    });
+  } else {
+    // Relais TURN public gratuit (dépannage ; débit limité). Remplace-le par ton
+    // propre TURN via les variables d'env pour une fiabilité en production.
+    servers.push({
+      urls: [
+        'turn:openrelay.metered.ca:80',
+        'turn:openrelay.metered.ca:443',
+        'turn:openrelay.metered.ca:443?transport=tcp',
+      ],
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    });
+  }
+  return servers;
+}
+
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/api/config', (req, res) => {
@@ -96,6 +127,7 @@ app.get('/api/config', (req, res) => {
     avatars: AVATARS, colors: COLORS, emotes: EMOTES,
     timeOptions: TIME_OPTIONS, livesOptions: LIVES_OPTIONS, defaults: DEFAULT_SETTINGS,
     track: TRACK, checkpoints: CHECKPOINTS, startHp: START_HP, maxPlayers: MAX_PLAYERS, lanUrls: lanUrls(),
+    iceServers: iceServers(),
   });
 });
 
